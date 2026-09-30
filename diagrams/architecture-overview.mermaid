@@ -1,0 +1,76 @@
+flowchart TB
+    subgraph ClientLayer["1. Presentation Tier (Vue 3 + Inertia.js + Tailwind CSS v4)"]
+        UserBrowser["Web Application User\n(Dashboard / Monitors / Incidents)"]
+        PublicVisitor["Public Status Page Consumer\n(/status/:slug)"]
+        ExecViewer["Executive SLA Report Viewer\n(Print / PDF Ready)"]
+    end
+
+    subgraph IngressLayer["2. Ingress & Tenancy Routing"]
+        TenantResolver["Tenant Resolution Middleware\n(Domain | Subdomain | Cookie | Org Code)"]
+        AuthGuard["Authentication Guard\n(Passkeys / TOTP 2FA / Session)"]
+    end
+
+    subgraph AppCore["3. Application Core (Laravel 13 & PHP 8.4)"]
+        DispatchEngine["Monitor Dispatch Engine\n(Minute-by-minute evaluation)"]
+        QueueSystem["Asynchronous Queue Workers\n(Job Dispatching & Rate Limiting)"]
+        
+        subgraph ProcessingPipelines["Processing & Observability Subsystems"]
+            SSRFValidator["SSRF Guard & IP Validator"]
+            HealthEvaluator["Health & Status Evaluator"]
+            ContractGuard["Contract Guard Engine\n(Schema Inference & Drift Hashing)"]
+            RateLimitParser["Rate Limit & Token Quota Parser"]
+            AIDetective["AI Detective Engine\n(Gemini 1.5 Flash + Heuristic)"]
+        end
+
+        AlertDispatcher["Multi-Channel Alert Dispatcher\n(Slack, Discord, Email, Webhooks)"]
+    end
+
+    subgraph ExecutionEngines["4. Dual Execution Engines"]
+        CloudProber["Cloud HTTP Prober\n(Outbound Async cURL / Guzzle)"]
+        AgentGateway["Private Agent Gateway API\n(/api/v1/agent/*)"]
+        PrivateAgent["Private On-Premise Agent Daemon\n(Inside Corporate Firewalls / VPCs)"]
+    end
+
+    subgraph PersistenceLayer["5. Persistence & State Tier"]
+        Database[("MySQL 8.0+\nSingle-DB Multi-Tenant Store")]
+        Cache[("Redis / Database Cache\nHeartbeats & Locks")]
+    end
+
+    subgraph ExternalEcosystem["6. External Endpoints & Integrations"]
+        PublicTarget["Public APIs & Cloud Services"]
+        PrivateTarget["Intranet Microservices & DBs"]
+        GeminiAPI["Google Gemini Generative AI"]
+        WebhookTargets["Slack / Discord / Webhook Receivers"]
+    end
+
+    %% Client to Ingress
+    UserBrowser --> TenantResolver --> AuthGuard --> AppCore
+    PublicVisitor --> TenantResolver --> AppCore
+    ExecViewer --> TenantResolver --> AuthGuard
+
+    %% Scheduling to Queue
+    DispatchEngine --> QueueSystem
+    QueueSystem --> CloudProber
+    QueueSystem -.->|Cached Job Queue| AgentGateway
+
+    %% Cloud Execution
+    CloudProber --> SSRFValidator --> PublicTarget
+    PublicTarget --> HealthEvaluator
+
+    %% Agent Execution
+    PrivateAgent -- "Reverse Poll (HTTPS)" --> AgentGateway
+    PrivateAgent --> PrivateTarget
+    PrivateTarget --> PrivateAgent
+    PrivateAgent -- "Post Results" --> AgentGateway --> HealthEvaluator
+
+    %% Analysis Pipeline
+    HealthEvaluator --> ContractGuard
+    HealthEvaluator --> RateLimitParser
+    HealthEvaluator -- "Trigger Incident" --> AIDetective
+    AIDetective --> GeminiAPI
+    HealthEvaluator -- "Trigger Alerts" --> AlertDispatcher
+    AlertDispatcher --> WebhookTargets
+
+    %% Persistence
+    AppCore --> Database
+    AppCore --> Cache

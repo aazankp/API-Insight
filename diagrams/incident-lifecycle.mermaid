@@ -1,0 +1,14 @@
+stateDiagram-v2
+    [*] --> Healthy: Checks Passing (Status 200, Valid Schema)
+    Healthy --> Degraded: High Latency / Schema Drift
+    Degraded --> Healthy: Latency Normalizes / Schema Re-verified
+    Healthy --> Failing: Check Fails (5xx / Timeout / Network Error)
+    Degraded --> Failing: Check Fails
+
+    Failing --> OpenIncident: Consecutive Failures >= Threshold (Default: 1)
+    OpenIncident --> OpenIncident: Subsequent Failures (Update last_error, increment failure_count)
+    OpenIncident --> AI_Investigating: Trigger AI Detective (Gemini 1.5 Flash)
+    AI_Investigating --> OpenIncident: Attach Root Cause & Remediation Steps
+
+    OpenIncident --> ResolvedIncident: Consecutive Successes >= Recovery Threshold
+    ResolvedIncident --> Healthy: Calculate MTTR & Dispatch Recovery Alert

@@ -1,0 +1,29 @@
+sequenceDiagram
+    autonumber
+    participant Admin as DevOps Engineer
+    participant AgentDaemon as api-monitor-agent.php
+    participant Gateway as AgentApiController (/api/v1/agent/*)
+    participant Auth as AgentAuthenticationService
+    participant DB as MySQL Database
+    participant PrivateAPI as Intranet Microservice
+
+    Admin->>Gateway: POST /agents/setup-token (Generate 1-time setup token)
+    Gateway-->>Admin: Returns setup token (valid 1 hour)
+    Admin->>AgentDaemon: Execute: php api-monitor-agent.php connect <TOKEN>
+    AgentDaemon->>Gateway: POST /api/v1/agent/connect (setup_token, agent_name, version)
+    Gateway->>Auth: Validate SHA-256 token hash & issue live Agent Token
+    Gateway-->>AgentDaemon: Return live Agent Bearer Token
+    
+    loop Every 30 seconds (Heartbeat)
+        AgentDaemon->>Gateway: POST /api/v1/agent/heartbeat
+        Gateway->>DB: UPDATE agents SET last_seen_at = now(), status = 'online'
+    end
+
+    loop Polling Loop
+        AgentDaemon->>Gateway: GET /api/v1/agent/jobs
+        Gateway-->>AgentDaemon: Return batch of due intranet monitors
+        AgentDaemon->>PrivateAPI: Execute local HTTP check
+        PrivateAPI-->>AgentDaemon: Local HTTP response
+        AgentDaemon->>Gateway: POST /api/v1/agent/results (Job metrics & headers)
+        Gateway->>DB: Record ApiCheck & update monitor state
+    end

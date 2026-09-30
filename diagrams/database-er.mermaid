@@ -1,0 +1,20 @@
+erDiagram
+    TENANTS ||--o{ USERS : "contains"
+    TENANTS ||--o{ PROJECTS : "owns"
+    TENANTS ||--o{ ROLES : "scopes"
+    TENANTS ||--o{ ACTIVITY_LOG : "records"
+
+    PROJECTS ||--o{ API_MONITORS : "groups"
+    PROJECTS ||--o{ AGENTS : "registers"
+    PROJECTS ||--o{ AUTH_PROFILES : "stores"
+    PROJECTS ||--o| SSL_CHECKS : "monitors"
+    PROJECTS ||--o| ALERT_SETTINGS : "configures"
+
+    API_MONITORS ||--o{ API_CHECKS : "generates"
+    API_MONITORS ||--o{ INCIDENTS : "triggers"
+    API_MONITORS ||--o{ API_MONITOR_EXPECTATIONS : "asserts"
+    API_MONITORS }o--o| AGENTS : "assigned to"
+    API_MONITORS }o--o| AUTH_PROFILES : "uses"
+
+    USERS ||--o{ PASSKEYS : "registers"
+    USERS ||--o{ NOTIFICATIONS : "receives"
