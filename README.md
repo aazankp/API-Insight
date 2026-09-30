@@ -1,4 +1,4 @@
-# ApiMonitor 🛰️ — Enterprise API Observability & SRE Incident Platform
+# API Insight 🛰️ — Enterprise API Observability & SRE Incident Platform
 
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20%2F%20Multi--Tenant-blue.svg)](#system-architecture)
 [![PHP](https://img.shields.io/badge/PHP-8.4+-777BB4.svg?logo=php&logoColor=white)](#technology-stack)
